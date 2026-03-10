@@ -1,0 +1,471 @@
+openapi: 3.1.0
+info:
+  title: Kartoteka Mieszkańca API
+  version: 0.1.0
+  description: REST API systemu Kartoteka Mieszkańca — rejestracja i zarządzanie danymi
+    mieszkańców gminy.
+  contact:
+    name: Kartoteka Mieszkańca
+    url: https://github.com/karczewa/kartoteka-mieszkanca
+paths:
+  /metrics:
+    get:
+      summary: Metrics
+      description: Endpoint that serves Prometheus metrics.
+      operationId: metrics_metrics_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Observability
+  /api/citizens:
+    get:
+      tags:
+      - Mieszkańcy
+      summary: List Citizens
+      operationId: list_citizens_api_citizens_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CitizenListItem'
+                type: array
+                title: Response List Citizens Api Citizens Get
+    post:
+      tags:
+      - Mieszkańcy
+      summary: Register Citizen
+      operationId: register_citizen_api_citizens_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CitizenCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitizenRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '409':
+          description: Mieszkaniec z tym numerem PESEL już istnieje
+  /api/citizens/{citizen_id}:
+    get:
+      tags:
+      - Mieszkańcy
+      summary: Get Citizen
+      operationId: get_citizen_api_citizens__citizen_id__get
+      parameters:
+      - name: citizen_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Citizen Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitizenRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Nie znaleziono mieszkańca
+    put:
+      tags:
+      - Mieszkańcy
+      summary: Update Citizen
+      operationId: update_citizen_api_citizens__citizen_id__put
+      parameters:
+      - name: citizen_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Citizen Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CitizenUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CitizenRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Nie znaleziono mieszkańca
+    delete:
+      tags:
+      - Mieszkańcy
+      summary: Delete Citizen
+      operationId: delete_citizen_api_citizens__citizen_id__delete
+      parameters:
+      - name: citizen_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Citizen Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+        '404':
+          description: Nie znaleziono mieszkańca
+  /api/health:
+    get:
+      summary: Health Check
+      operationId: health_api_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      tags:
+      - Observability
+components:
+  schemas:
+    AdresKorespondencyjnyRead:
+      properties:
+        ulica:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ulica
+        nr_domu:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nr Domu
+        nr_mieszkania:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nr Mieszkania
+        miasto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Miasto
+        kod_pocztowy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Kod Pocztowy
+      type: object
+      title: AdresKorespondencyjnyRead
+    AdresZameldowaniaRead:
+      properties:
+        ulica:
+          type: string
+          title: Ulica
+        nr_domu:
+          type: string
+          title: Nr Domu
+        nr_mieszkania:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nr Mieszkania
+        miasto:
+          type: string
+          title: Miasto
+        kod_pocztowy:
+          type: string
+          title: Kod Pocztowy
+        typ_zameldowania:
+          type: string
+          enum:
+          - stale
+          - tymczasowe
+          title: Typ Zameldowania
+        data_zameldowania:
+          type: string
+          format: date
+          title: Data Zameldowania
+      type: object
+      required:
+      - ulica
+      - nr_domu
+      - miasto
+      - kod_pocztowy
+      - typ_zameldowania
+      - data_zameldowania
+      title: AdresZameldowaniaRead
+    CitizenCreate:
+      properties:
+        pesel:
+          type: string
+          title: Pesel
+        imie:
+          type: string
+          title: Imie
+        nazwisko:
+          type: string
+          title: Nazwisko
+        adres_ulica:
+          type: string
+          title: Adres Ulica
+        adres_nr_domu:
+          type: string
+          title: Adres Nr Domu
+        adres_nr_mieszkania:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Adres Nr Mieszkania
+        adres_miasto:
+          type: string
+          title: Adres Miasto
+        adres_kod_pocztowy:
+          type: string
+          title: Adres Kod Pocztowy
+        adres_typ_zameldowania:
+          type: string
+          enum:
+          - stale
+          - tymczasowe
+          title: Adres Typ Zameldowania
+        adres_data_zameldowania:
+          type: string
+          format: date
+          title: Adres Data Zameldowania
+        telefon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefon
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        koresp_ulica:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Ulica
+        koresp_nr_domu:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Nr Domu
+        koresp_nr_mieszkania:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Nr Mieszkania
+        koresp_miasto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Miasto
+        koresp_kod_pocztowy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Kod Pocztowy
+      type: object
+      required:
+      - pesel
+      - imie
+      - nazwisko
+      - adres_ulica
+      - adres_nr_domu
+      - adres_miasto
+      - adres_kod_pocztowy
+      - adres_typ_zameldowania
+      - adres_data_zameldowania
+      title: CitizenCreate
+    CitizenListItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        pesel:
+          type: string
+          title: Pesel
+        imie:
+          type: string
+          title: Imie
+        nazwisko:
+          type: string
+          title: Nazwisko
+        miasto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Miasto
+      type: object
+      required:
+      - id
+      - pesel
+      - imie
+      - nazwisko
+      title: CitizenListItem
+    CitizenRead:
+      properties:
+        id:
+          type: integer
+          title: Id
+        pesel:
+          type: string
+          title: Pesel
+        imie:
+          type: string
+          title: Imie
+        nazwisko:
+          type: string
+          title: Nazwisko
+        data_urodzenia:
+          type: string
+          format: date
+          title: Data Urodzenia
+        plec:
+          type: string
+          enum:
+          - M
+          - K
+          title: Plec
+        telefon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefon
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        adres_zameldowania:
+          anyOf:
+          - $ref: '#/components/schemas/AdresZameldowaniaRead'
+          - type: 'null'
+        adres_korespondencyjny:
+          anyOf:
+          - $ref: '#/components/schemas/AdresKorespondencyjnyRead'
+          - type: 'null'
+      type: object
+      required:
+      - id
+      - pesel
+      - imie
+      - nazwisko
+      - data_urodzenia
+      - plec
+      title: CitizenRead
+    CitizenUpdate:
+      properties:
+        imie:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Imie
+        nazwisko:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nazwisko
+        telefon:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Telefon
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        koresp_ulica:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Ulica
+        koresp_nr_domu:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Nr Domu
+        koresp_nr_mieszkania:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Nr Mieszkania
+        koresp_miasto:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Miasto
+        koresp_kod_pocztowy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Koresp Kod Pocztowy
+      type: object
+      title: CitizenUpdate
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

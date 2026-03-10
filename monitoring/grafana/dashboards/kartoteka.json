@@ -11,7 +11,7 @@
       "title": "Request Rate (req/s)",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total[1m])) by (handler, method)",
@@ -31,7 +31,7 @@
       "title": "Error Rate (4xx / 5xx)",
       "type": "timeseries",
       "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total{status=~\"4..\"}[1m]))",
@@ -60,7 +60,7 @@
       "title": "Request Latency Percentiles",
       "type": "timeseries",
       "gridPos": { "x": 0, "y": 8, "w": 16, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))",
@@ -90,7 +90,7 @@
       "title": "Total Requests (last 1h)",
       "type": "stat",
       "gridPos": { "x": 16, "y": 8, "w": 4, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(increase(http_requests_total[1h]))",
@@ -106,7 +106,7 @@
       "title": "Error % (last 1h)",
       "type": "stat",
       "gridPos": { "x": 20, "y": 8, "w": 4, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "100 * sum(increase(http_requests_total{status=~\"[45]..\"}[1h])) / sum(increase(http_requests_total[1h]))",
@@ -134,7 +134,7 @@
       "title": "Avg Latency (last 1h)",
       "type": "stat",
       "gridPos": { "x": 16, "y": 12, "w": 4, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_request_duration_seconds_sum[1h])) / sum(rate(http_request_duration_seconds_count[1h]))",
@@ -150,7 +150,7 @@
       "title": "P99 Latency (last 1h)",
       "type": "stat",
       "gridPos": { "x": 20, "y": 12, "w": 4, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1h])) by (le))",
@@ -166,7 +166,7 @@
       "title": "Top Endpoints by Traffic",
       "type": "barchart",
       "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "topk(10, sum(increase(http_requests_total[1h])) by (handler, method))",
@@ -184,7 +184,7 @@
       "title": "Status Code Distribution",
       "type": "piechart",
       "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(increase(http_requests_total[1h])) by (status)",
@@ -195,15 +195,5 @@
       ]
     }
   ],
-  "templating": {
-    "list": [
-      {
-        "name": "datasource",
-        "type": "datasource",
-        "pluginId": "prometheus",
-        "label": "Datasource",
-        "hide": 0
-      }
-    ]
-  }
+  "templating": { "list": [] }
 }
