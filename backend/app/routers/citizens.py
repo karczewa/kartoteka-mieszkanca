@@ -7,12 +7,33 @@ from app.schemas import (
     AdresKorespondencyjnyRead,
     AdresZameldowaniaRead,
     CitizenCreate,
+    CitizenListItem,
     CitizenRead,
     CitizenUpdate,
 )
 from database import get_session
 
 router = APIRouter(prefix="/api/citizens", tags=["Mieszkańcy"])
+
+
+@router.get("", response_model=list[CitizenListItem])
+def list_citizens(session: Session = Depends(get_session)):
+    citizens = session.exec(select(Citizen)).all()
+    result = []
+    for citizen in citizens:
+        current_entry = session.exec(
+            select(RegistrationEntry)
+            .where(RegistrationEntry.obywatel_id == citizen.id)
+            .where(RegistrationEntry.is_current == True)
+        ).first()
+        result.append(CitizenListItem(
+            id=citizen.id,
+            pesel=citizen.pesel,
+            imie=citizen.imie,
+            nazwisko=citizen.nazwisko,
+            miasto=current_entry.miasto if current_entry else None,
+        ))
+    return result
 
 
 def _build_citizen_read(citizen: Citizen, session: Session) -> CitizenRead:
