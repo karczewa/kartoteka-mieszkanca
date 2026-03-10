@@ -9,6 +9,20 @@ function formatPostalCode(value: string): string {
   return `${digits.slice(0, 2)}-${digits.slice(2)}`
 }
 
+function birthDateFromPesel(pesel: string): string | null {
+  if (pesel.length !== 11 || !/^\d{11}$/.test(pesel)) return null
+  let year = parseInt(pesel.slice(0, 2), 10)
+  let month = parseInt(pesel.slice(2, 4), 10)
+  const day = parseInt(pesel.slice(4, 6), 10)
+  if (month >= 81) { year += 1800; month -= 80 }
+  else if (month >= 61) { year += 2200; month -= 60 }
+  else if (month >= 41) { year += 2100; month -= 40 }
+  else if (month >= 21) { year += 2000; month -= 20 }
+  else { year += 1900 }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
 interface Props {
   onClose: () => void
   onCreated: () => void
@@ -142,6 +156,7 @@ export default function RegisterModal({ onClose, onCreated }: Props) {
                 <label className="block text-sm text-gray-700 mb-1">Data zameldowania *</label>
                 <input required type="date" value={form.adres_data_zameldowania}
                   onChange={e => set('adres_data_zameldowania', e.target.value)}
+                  min={birthDateFromPesel(form.pesel) ?? undefined}
                   max={TODAY}
                   className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
