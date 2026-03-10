@@ -1,10 +1,14 @@
 from datetime import date, datetime
 from typing import ClassVar, List, Optional
+import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
 
 
 class Citizen(SQLModel, table=True):
     __tablename__: ClassVar[str] = "citizens"
+    __table_args__: ClassVar[tuple] = (
+        sa.CheckConstraint("plec IN ('M', 'K')", name="ck_citizens_plec"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     pesel: str = Field(unique=True, index=True, max_length=11)
@@ -30,6 +34,9 @@ class Citizen(SQLModel, table=True):
 
 class IdentityDocument(SQLModel, table=True):
     __tablename__: ClassVar[str] = "identity_documents"
+    __table_args__: ClassVar[tuple] = (
+        sa.CheckConstraint("typ IN ('dowod', 'paszport')", name="ck_identity_documents_typ"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     obywatel_id: int = Field(foreign_key="citizens.id")
@@ -46,6 +53,9 @@ class IdentityDocument(SQLModel, table=True):
 
 class RegistrationEntry(SQLModel, table=True):
     __tablename__: ClassVar[str] = "registration_entries"
+    __table_args__: ClassVar[tuple] = (
+        sa.CheckConstraint("typ_zameldowania IN ('stale', 'tymczasowe')", name="ck_registration_entries_typ"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     obywatel_id: int = Field(foreign_key="citizens.id")
@@ -63,9 +73,14 @@ class RegistrationEntry(SQLModel, table=True):
 
 class AuditLog(SQLModel, table=True):
     __tablename__: ClassVar[str] = "audit_log"
+    __table_args__: ClassVar[tuple] = (
+        sa.CheckConstraint("typ_operacji IN ('CREATE', 'UPDATE', 'DELETE', 'VIEW')", name="ck_audit_log_typ_operacji"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     typ_operacji: str = Field(max_length=20)  # 'CREATE', 'UPDATE', 'DELETE', 'VIEW'
     opis: str = Field(max_length=500)
     obywatel_id: Optional[int] = Field(default=None, foreign_key="citizens.id")
+    dane_przed: Optional[str] = Field(default=None, sa_column=sa.Column(sa.JSON, nullable=True))  # snapshot before change
+    dane_po: Optional[str] = Field(default=None, sa_column=sa.Column(sa.JSON, nullable=True))     # snapshot after change
