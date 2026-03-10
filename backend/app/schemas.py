@@ -1,27 +1,33 @@
 from datetime import date
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, field_validator
 from app.pesel import validate_pesel
 
 
 # ---------------------------------------------------------------------------
-# Address sub-schemas (reused in multiple places)
+# Address sub-schemas
 # ---------------------------------------------------------------------------
 
-class AdresBase(BaseModel):
+class AdresZameldowaniaRead(BaseModel):
     ulica: str
     nr_domu: str
     nr_mieszkania: Optional[str] = None
     miasto: str
     kod_pocztowy: str
+    typ_zameldowania: Literal["stale", "tymczasowe"]
+    data_zameldowania: date
+
+    model_config = {"from_attributes": True}
 
 
-class AdresKorespondencyjny(BaseModel):
-    koresp_ulica: Optional[str] = None
-    koresp_nr_domu: Optional[str] = None
-    koresp_nr_mieszkania: Optional[str] = None
-    koresp_miasto: Optional[str] = None
-    koresp_kod_pocztowy: Optional[str] = None
+class AdresKorespondencyjnyRead(BaseModel):
+    ulica: Optional[str] = None
+    nr_domu: Optional[str] = None
+    nr_mieszkania: Optional[str] = None
+    miasto: Optional[str] = None
+    kod_pocztowy: Optional[str] = None
+
+    model_config = {"from_attributes": True}
 
 
 # ---------------------------------------------------------------------------
@@ -56,7 +62,7 @@ class CitizenCreate(BaseModel):
     @field_validator("pesel")
     @classmethod
     def pesel_valid(cls, v: str) -> str:
-        validate_pesel(v)  # raises ValueError with Polish message if invalid
+        validate_pesel(v)
         return v
 
     @field_validator("imie", "nazwisko")
@@ -95,11 +101,8 @@ class CitizenRead(BaseModel):
     plec: Literal["M", "K"]
     telefon: Optional[str] = None
     email: Optional[str] = None
-    koresp_ulica: Optional[str] = None
-    koresp_nr_domu: Optional[str] = None
-    koresp_nr_mieszkania: Optional[str] = None
-    koresp_miasto: Optional[str] = None
-    koresp_kod_pocztowy: Optional[str] = None
+    adres_zameldowania: Optional[AdresZameldowaniaRead] = None
+    adres_korespondencyjny: Optional[AdresKorespondencyjnyRead] = None
 
     model_config = {"from_attributes": True}
 

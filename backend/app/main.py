@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_and_tables
 import app.models  # noqa: F401 — ensures all models are registered before table creation
+from app.routers import citizens
 
 app = FastAPI(title="Kartoteka Mieszkańca API")
 
@@ -12,6 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(citizens.router)
 
 
 @app.on_event("startup")
