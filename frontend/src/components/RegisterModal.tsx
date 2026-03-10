@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { createCitizen } from '../api/citizens'
 
+const TODAY = new Date().toISOString().split('T')[0]
+
+function formatPostalCode(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 5)
+  if (digits.length <= 2) return digits
+  return `${digits.slice(0, 2)}-${digits.slice(2)}`
+}
+
 interface Props {
   onClose: () => void
   onCreated: () => void
@@ -117,8 +125,9 @@ export default function RegisterModal({ onClose, onCreated }: Props) {
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Kod pocztowy *</label>
-                <input required value={form.adres_kod_pocztowy} onChange={e => set('adres_kod_pocztowy', e.target.value)}
-                  placeholder="00-000"
+                <input required value={form.adres_kod_pocztowy}
+                  onChange={e => set('adres_kod_pocztowy', formatPostalCode(e.target.value))}
+                  pattern="\d{2}-\d{3}" maxLength={6} placeholder="00-000"
                   className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
@@ -131,7 +140,9 @@ export default function RegisterModal({ onClose, onCreated }: Props) {
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Data zameldowania *</label>
-                <input required type="date" value={form.adres_data_zameldowania} onChange={e => set('adres_data_zameldowania', e.target.value)}
+                <input required type="date" value={form.adres_data_zameldowania}
+                  onChange={e => set('adres_data_zameldowania', e.target.value)}
+                  max={TODAY}
                   className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
@@ -180,8 +191,9 @@ export default function RegisterModal({ onClose, onCreated }: Props) {
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Kod pocztowy</label>
-                <input value={form.koresp_kod_pocztowy} onChange={e => set('koresp_kod_pocztowy', e.target.value)}
-                  placeholder="00-000"
+                <input value={form.koresp_kod_pocztowy}
+                  onChange={e => set('koresp_kod_pocztowy', formatPostalCode(e.target.value))}
+                  pattern="\d{2}-\d{3}" maxLength={6} placeholder="00-000"
                   className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
