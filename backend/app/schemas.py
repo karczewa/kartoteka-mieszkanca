@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Literal, Optional
 from pydantic import BaseModel, EmailStr, field_validator
+from app.pesel import validate_pesel
 
 
 # ---------------------------------------------------------------------------
@@ -54,9 +55,8 @@ class CitizenCreate(BaseModel):
 
     @field_validator("pesel")
     @classmethod
-    def pesel_must_be_digits(cls, v: str) -> str:
-        if not v.isdigit() or len(v) != 11:
-            raise ValueError("PESEL musi składać się z 11 cyfr")
+    def pesel_valid(cls, v: str) -> str:
+        validate_pesel(v)  # raises ValueError with Polish message if invalid
         return v
 
     @field_validator("imie", "nazwisko")
