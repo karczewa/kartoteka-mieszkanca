@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from app.audit import _citizen_snapshot, log_action
 from app.models import Citizen, RegistrationEntry
 from app.pesel import parse_pesel
 from app.schemas import (
@@ -106,6 +107,13 @@ def register_citizen(payload: CitizenCreate, session: Session = Depends(get_sess
         is_current=True,
     )
     session.add(entry)
+    log_action(
+        session,
+        typ_operacji="CREATE",
+        opis=f"Zarejestrowano mieszkańca {citizen.imie} {citizen.nazwisko} (PESEL: {citizen.pesel})",
+        obywatel_id=citizen.id,
+        dane_po=_citizen_snapshot(citizen),
+    )
     session.commit()
     session.refresh(citizen)
 
@@ -117,6 +125,13 @@ def get_citizen(citizen_id: int, session: Session = Depends(get_session)):
     citizen = session.get(Citizen, citizen_id)
     if not citizen:
         raise HTTPException(status_code=404, detail="Nie znaleziono mieszkańca")
+    log_action(
+        session,
+        typ_operacji="VIEW",
+        opis=f"Wyświetlono kartotekę {citizen.imie} {citizen.nazwisko} (PESEL: {citizen.pesel})",
+        obywatel_id=citizen_id,
+    )
+    session.commit()
     return _build_citizen_read(citizen, session)
 
 
@@ -130,10 +145,19 @@ def update_citizen(
     if not citizen:
         raise HTTPException(status_code=404, detail="Nie znaleziono mieszkańca")
 
+    snapshot_before = _citizen_snapshot(citizen)
     update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(citizen, field, value)
 
+    log_action(
+        session,
+        typ_operacji="UPDATE",
+        opis=f"Zaktualizowano dane mieszkańca {citizen.imie} {citizen.nazwisko} (PESEL: {citizen.pesel})",
+        obywatel_id=citizen_id,
+        dane_przed=snapshot_before,
+        dane_po=_citizen_snapshot(citizen),
+    )
     session.add(citizen)
     session.commit()
     session.refresh(citizen)
@@ -146,6 +170,8 @@ def delete_citizen(citizen_id: int, session: Session = Depends(get_session)):
     citizen = session.get(Citizen, citizen_id)
     if not citizen:
         raise HTTPException(status_code=404, detail="Nie znaleziono mieszkańca")
+
+    snapshot_before = _citizen_snapshot(citizen)
 
     # Delete all linked records first
     for entry in session.exec(
@@ -164,5 +190,11 @@ def delete_citizen(citizen_id: int, session: Session = Depends(get_session)):
     ).all():
         session.delete(log)
 
+    log_action(
+        session,
+        typ_operacji="DELETE",
+        opis=f"Usunięto mieszkańca {citizen.imie} {citizen.nazwisko} (PESEL: {citizen.pesel})",
+        dane_przed=snapshot_before,
+    )
     session.delete(citizen)
     session.commit()
