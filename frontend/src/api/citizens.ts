@@ -2,6 +2,14 @@ import type { Citizen, CitizenListItem } from '../types'
 
 const BASE = '/api/citizens'
 
+type ApiDetail = string | Array<{ msg: string; loc?: unknown[] }>
+
+function extractError(detail: ApiDetail | undefined, fallback: string): string {
+  if (!detail) return fallback
+  if (typeof detail === 'string') return detail
+  return detail.map(e => e.msg).join('; ')
+}
+
 export async function fetchCitizens(): Promise<CitizenListItem[]> {
   const res = await fetch(BASE)
   if (!res.ok) throw new Error('Błąd pobierania listy mieszkańców')
@@ -21,8 +29,8 @@ export async function createCitizen(data: Record<string, unknown>): Promise<Citi
     body: JSON.stringify(data),
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { detail?: string }
-    throw new Error(err.detail ?? 'Błąd rejestracji mieszkańca')
+    const err = await res.json().catch(() => ({})) as { detail?: ApiDetail }
+    throw new Error(extractError(err.detail, 'Błąd rejestracji mieszkańca'))
   }
   return res.json()
 }
@@ -34,8 +42,8 @@ export async function updateCitizen(id: number, data: Record<string, unknown>): 
     body: JSON.stringify(data),
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { detail?: string }
-    throw new Error(err.detail ?? 'Błąd aktualizacji danych')
+    const err = await res.json().catch(() => ({})) as { detail?: ApiDetail }
+    throw new Error(extractError(err.detail, 'Błąd aktualizacji danych'))
   }
   return res.json()
 }
