@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlmodel import Session, select, or_
 
 from app.audit import _citizen_snapshot, log_action
 from app.models import Citizen, RegistrationEntry
@@ -18,23 +20,47 @@ router = APIRouter(prefix="/api/citizens", tags=["Mieszkańcy"])
 
 
 @router.get("", response_model=list[CitizenListItem])
-def list_citizens(session: Session = Depends(get_session)):
-    citizens = session.exec(select(Citizen)).all()
-    result = []
-    for citizen in citizens:
-        current_entry = session.exec(
-            select(RegistrationEntry)
-            .where(RegistrationEntry.obywatel_id == citizen.id)
-            .where(RegistrationEntry.is_current == True)
-        ).first()
-        result.append(CitizenListItem(
+def list_citizens(
+    q: Optional[str] = Query(default=None, description="Wyszukiwanie ogólne po imieniu, nazwisku, PESEL lub mieście"),
+    pesel: Optional[str] = Query(default=None, description="Filtr po numerze PESEL (częściowy)"),
+    imie: Optional[str] = Query(default=None, description="Filtr po imieniu (częściowy)"),
+    nazwisko: Optional[str] = Query(default=None, description="Filtr po nazwisku (częściowy)"),
+    miasto: Optional[str] = Query(default=None, description="Filtr po mieście zameldowania (częściowy)"),
+    session: Session = Depends(get_session),
+):
+    stmt = (
+        select(Citizen, RegistrationEntry)
+        .join(RegistrationEntry, (RegistrationEntry.obywatel_id == Citizen.id) & (RegistrationEntry.is_current == True), isouter=True)
+    )
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(
+            or_(
+                Citizen.imie.ilike(like),
+                Citizen.nazwisko.ilike(like),
+                Citizen.pesel.contains(q),
+                RegistrationEntry.miasto.ilike(like),
+            )
+        )
+    if pesel:
+        stmt = stmt.where(Citizen.pesel.contains(pesel))
+    if imie:
+        stmt = stmt.where(Citizen.imie.ilike(f"%{imie}%"))
+    if nazwisko:
+        stmt = stmt.where(Citizen.nazwisko.ilike(f"%{nazwisko}%"))
+    if miasto:
+        stmt = stmt.where(RegistrationEntry.miasto.ilike(f"%{miasto}%"))
+    rows = session.exec(stmt).all()
+    return [
+        CitizenListItem(
             id=citizen.id,
             pesel=citizen.pesel,
             imie=citizen.imie,
             nazwisko=citizen.nazwisko,
-            miasto=current_entry.miasto if current_entry else None,
-        ))
-    return result
+            miasto=entry.miasto if entry else None,
+        )
+        for citizen, entry in rows
+    ]
 
 
 def _build_citizen_read(citizen: Citizen, session: Session) -> CitizenRead:

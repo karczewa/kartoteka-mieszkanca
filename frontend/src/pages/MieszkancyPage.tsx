@@ -10,13 +10,19 @@ export default function MieszkancyPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [showRegister, setShowRegister] = useState(false)
 
-  async function load() {
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300)
+    return () => clearTimeout(t)
+  }, [query])
+
+  async function load(q?: string) {
     setLoading(true)
     setError(null)
     try {
-      setCitizens(await fetchCitizens())
+      setCitizens(await fetchCitizens(q || undefined))
     } catch {
       setError('Nie udało się pobrać listy mieszkańców.')
     } finally {
@@ -24,16 +30,9 @@ export default function MieszkancyPage() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(debouncedQuery) }, [debouncedQuery])
 
-  const q = query.toLowerCase()
-  const filtered = citizens.filter(c =>
-    !q ||
-    c.imie.toLowerCase().includes(q) ||
-    c.nazwisko.toLowerCase().includes(q) ||
-    c.pesel.includes(q) ||
-    (c.miasto ?? '').toLowerCase().includes(q)
-  )
+  const filtered = citizens
 
   return (
     <div>
@@ -101,7 +100,7 @@ export default function MieszkancyPage() {
       {showRegister && (
         <RegisterModal
           onClose={() => setShowRegister(false)}
-          onCreated={() => { setShowRegister(false); load() }}
+          onCreated={() => { setShowRegister(false); load(debouncedQuery) }}
         />
       )}
     </div>

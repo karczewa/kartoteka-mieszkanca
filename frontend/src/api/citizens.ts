@@ -10,8 +10,9 @@ function extractError(detail: ApiDetail | undefined, fallback: string): string {
   return detail.map(e => e.msg).join('; ')
 }
 
-export async function fetchCitizens(): Promise<CitizenListItem[]> {
-  const res = await fetch(BASE)
+export async function fetchCitizens(q?: string): Promise<CitizenListItem[]> {
+  const url = q ? `${BASE}?q=${encodeURIComponent(q)}` : BASE
+  const res = await fetch(url)
   if (!res.ok) throw new Error('Błąd pobierania listy mieszkańców')
   return res.json()
 }
