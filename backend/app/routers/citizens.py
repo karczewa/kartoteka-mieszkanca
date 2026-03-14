@@ -21,7 +21,11 @@ router = APIRouter(prefix="/api/citizens", tags=["Mieszkańcy"])
 
 @router.get("", response_model=list[CitizenListItem])
 def list_citizens(
-    q: Optional[str] = Query(default=None, description="Filtr po imieniu, nazwisku, PESEL lub mieście"),
+    q: Optional[str] = Query(default=None, description="Wyszukiwanie ogólne po imieniu, nazwisku, PESEL lub mieście"),
+    pesel: Optional[str] = Query(default=None, description="Filtr po numerze PESEL (częściowy)"),
+    imie: Optional[str] = Query(default=None, description="Filtr po imieniu (częściowy)"),
+    nazwisko: Optional[str] = Query(default=None, description="Filtr po nazwisku (częściowy)"),
+    miasto: Optional[str] = Query(default=None, description="Filtr po mieście zameldowania (częściowy)"),
     session: Session = Depends(get_session),
 ):
     stmt = (
@@ -38,6 +42,14 @@ def list_citizens(
                 RegistrationEntry.miasto.ilike(like),
             )
         )
+    if pesel:
+        stmt = stmt.where(Citizen.pesel.contains(pesel))
+    if imie:
+        stmt = stmt.where(Citizen.imie.ilike(f"%{imie}%"))
+    if nazwisko:
+        stmt = stmt.where(Citizen.nazwisko.ilike(f"%{nazwisko}%"))
+    if miasto:
+        stmt = stmt.where(RegistrationEntry.miasto.ilike(f"%{miasto}%"))
     rows = session.exec(stmt).all()
     return [
         CitizenListItem(

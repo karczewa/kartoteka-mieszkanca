@@ -31,7 +31,31 @@ paths:
       - name: q
         in: query
         required: false
-        description: Filtr po imieniu, nazwisku, PESEL lub mieście (wyszukiwanie częściowe)
+        description: Wyszukiwanie ogólne po imieniu, nazwisku, PESEL lub mieście
+        schema:
+          type: string
+      - name: pesel
+        in: query
+        required: false
+        description: Filtr po numerze PESEL (częściowy)
+        schema:
+          type: string
+      - name: imie
+        in: query
+        required: false
+        description: Filtr po imieniu (częściowy)
+        schema:
+          type: string
+      - name: nazwisko
+        in: query
+        required: false
+        description: Filtr po nazwisku (częściowy)
+        schema:
+          type: string
+      - name: miasto
+        in: query
+        required: false
+        description: Filtr po mieście zameldowania (częściowy)
         schema:
           type: string
       responses:
