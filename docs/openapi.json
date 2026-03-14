@@ -37,6 +37,17 @@
         ],
         "summary": "List Citizens",
         "operationId": "list_citizens_api_citizens_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Filtr po imieniu, nazwisku, PESEL lub mieście (wyszukiwanie częściowe)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
